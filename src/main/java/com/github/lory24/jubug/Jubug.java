@@ -17,23 +17,22 @@ public class Jubug extends CraftServer {
         System.out.println("Starting Jubug Server for Minecraft 1.8...");
 
         // Files generation ----
-        // Eula file
-        File eulaFile = new File("eula.txt");
-        if (!eulaFile.exists()) {
-            eulaFile.createNewFile();
-            InputStream defaultEulaStream = Jubug.class.getClassLoader().getResourceAsStream("eula.txt");
-            assert defaultEulaStream != null;
-            BufferedReader eulaDefaultBF = new BufferedReader(new InputStreamReader(defaultEulaStream));
-            StringBuilder defaultEulaText = new StringBuilder();
-            while (eulaDefaultBF.ready()) defaultEulaText.append(eulaDefaultBF.readLine()).append("\n");
-            FileWriter writer = new FileWriter(eulaFile);
-            writer.write(defaultEulaText.toString());
+        File[] defaultFiles = { new File("eula.txt"), new File("server-proprieties.proprieties") };
+        for (File f: defaultFiles) {
+            if (f.exists()) continue;
+            f.createNewFile();
+            InputStream inputStream = Jubug.class.getClassLoader().getResourceAsStream(f.getName());
+            assert inputStream != null;
+            BufferedReader defaultFileBR = new BufferedReader(new InputStreamReader(inputStream));
+            StringBuilder fileContent = new StringBuilder();
+            while (defaultFileBR.ready()) fileContent.append(defaultFileBR.readLine()).append("\n");
+            FileWriter writer = new FileWriter(f);
+            writer.write(fileContent.toString());
             writer.flush(); writer.close();
         }
 
-
         // Eula check
-        InputStream eulaStream = new FileInputStream(eulaFile);
+        InputStream eulaStream = new FileInputStream(defaultFiles[0]);
         BufferedReader bf = new BufferedReader(new InputStreamReader(eulaStream));
         StringBuilder eulaText = new StringBuilder();
         while (bf.ready()) eulaText.append(bf.readLine()).append("\n");
