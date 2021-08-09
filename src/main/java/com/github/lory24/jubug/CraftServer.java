@@ -3,6 +3,7 @@ package com.github.lory24.jubug;
 import com.github.lory24.jubug.util.PacketsCheckingUtils;
 import com.github.lory24.jubug.util.ServerProprieties;
 import com.github.lory24.jubug.util.player.CraftPlayer;
+import lombok.Getter;
 import lombok.SneakyThrows;
 
 import java.io.DataInputStream;
@@ -18,7 +19,7 @@ import java.util.List;
 public abstract class CraftServer {
     private final Logger logger;
     private ServerSocket serverSocket;
-    private final List<CraftPlayer> players = new ArrayList<>();
+    @Getter private final List<CraftPlayer> players = new ArrayList<>();
     private final HashMap<CraftPlayer, Thread> playersThreads;
     private ServerProprieties serverProprieties;
     private final int PROTOCOL = 47;
