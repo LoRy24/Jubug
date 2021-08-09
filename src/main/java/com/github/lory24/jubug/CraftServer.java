@@ -1,13 +1,12 @@
 package com.github.lory24.jubug;
 
+import com.github.lory24.jubug.util.PacketsCheckingUtils;
 import com.github.lory24.jubug.util.ServerProprieties;
-import com.github.lory24.jubug.util.SizeFetcher;
 import com.github.lory24.jubug.util.player.CraftPlayer;
 import lombok.SneakyThrows;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.lang.instrument.Instrumentation;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
@@ -15,12 +14,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+@SuppressWarnings({"FieldCanBeLocal", "MismatchedQueryAndUpdateOfCollection"})
 public abstract class CraftServer {
     private final Logger logger;
     private ServerSocket serverSocket;
-    private List<CraftPlayer> players = new ArrayList<>();
-    private HashMap<CraftPlayer, Thread> playersThreads;
+    private final List<CraftPlayer> players = new ArrayList<>();
+    private final HashMap<CraftPlayer, Thread> playersThreads;
     private ServerProprieties serverProprieties;
+    private final int PROTOCOL = 47;
 
     public CraftServer() {
         this.logger = new Logger(null, System.out);
@@ -56,16 +57,16 @@ public abstract class CraftServer {
         DataOutputStream dataOutputStream =
                 new DataOutputStream(socket.getOutputStream()); // Server -> Client
 
-        if (checkPacketLengthError(socket, dataInputStream) || checkPacketError(socket, dataInputStream, 0x00)) return;
+        if (PacketsCheckingUtils.checkPacketLengthError(socket, dataInputStream) || PacketsCheckingUtils.checkPacketError(socket, dataInputStream, 0x00)) return;
 
         int protocolVersion = ServerDataUtil.readVarInt(dataInputStream);
-        String serverAddress = ServerDataUtil.readString(dataInputStream);
-        int port = dataInputStream.readUnsignedShort();
+        ServerDataUtil.readString(dataInputStream);
+        dataInputStream.readUnsignedShort();
 
         int nextState = ServerDataUtil.readVarInt(dataInputStream);
         if (nextState == 0x1) { // Status
             try {
-                manageStatusRequest(socket, dataInputStream, dataOutputStream);
+                manageStatusRequest(socket, dataInputStream, dataOutputStream, protocolVersion);
             } catch (Exception ignored) { }
         } else if (nextState == 0x2) { // Login
             makePlayerJoin(socket);
@@ -75,19 +76,20 @@ public abstract class CraftServer {
         }
     }
 
-    private void manageStatusRequest(Socket socket, DataInputStream dataInputStream, DataOutputStream dataOutputStream) throws Exception {
+    private void manageStatusRequest(Socket socket, DataInputStream dataInputStream, DataOutputStream dataOutputStream, int protocolVersion) throws Exception {
 
-        if (checkPacketLengthError(socket, dataInputStream) || checkPacketError(socket, dataInputStream, 0x00)) return;
+        if (PacketsCheckingUtils.checkPacketLengthError(socket, dataInputStream) || PacketsCheckingUtils.checkPacketError(socket, dataInputStream, 0x00)) return;
 
         // SEND A RESPONSE
-        String jsonResp = "{\"version\":{\"name\":\"Jubug 1.8\",\"protocol\":47},\"players\":{\"max\":" + serverProprieties.getMaxPlayers() +
-                ",\"online\":" + players.size() + "},\"description\":{\"text\":\"" + serverProprieties.getMotd() + "\"}}";
+        String jsonResp = "{\"version\":{\"name\":\"Jubug 1.8\",\"protocol\":" + PROTOCOL + "},\"players\":{\"max\":" + serverProprieties.getMaxPlayers() + ",\"online\":" + players.size() + "}," +
+                "\"description\":{\"text\":\"%s\"}}";
+        jsonResp = protocolVersion == PROTOCOL ? String.format(jsonResp, serverProprieties.getMotd()) : String.format(jsonResp, "\u00a7cBRO CHANGE VERSION NOW!");
         ServerDataUtil.writeVarInt(dataOutputStream, 3 + jsonResp.getBytes().length);
         ServerDataUtil.writeVarInt(dataOutputStream, 0x00);
         ServerDataUtil.writeString(dataOutputStream, jsonResp);
 
         // READ THE PING
-        if (checkPacketLengthError(socket, dataInputStream) || checkPacketError(socket, dataInputStream, 0x01)) return;
+        if (PacketsCheckingUtils.checkPacketLengthError(socket, dataInputStream) || PacketsCheckingUtils.checkPacketError(socket, dataInputStream, 0x01)) return;
         long v = dataInputStream.readLong();
 
         // SEND THE PONG
@@ -96,29 +98,6 @@ public abstract class CraftServer {
         ServerDataUtil.writeVarLong(dataOutputStream, 0x01);
         dataOutputStream.writeLong(v);
         socket.close();
-    }
-
-    @SneakyThrows
-    private boolean checkPacketLengthError(Socket socket, DataInputStream dataInputStream) {
-        int packetLength = ServerDataUtil.readVarInt(dataInputStream);
-        if (packetLength > 2097151) {
-            socket.close();
-            getLogger().info("Connection from " + socket.getInetAddress().getHostAddress() + ":" + socket.getPort() + " closed: Too many bytes!");
-            return true;
-        }
-        return false;
-    }
-
-    @SneakyThrows
-    private boolean checkPacketError(Socket socket, DataInputStream dataInputStream, int id) {
-        int packetID = ServerDataUtil.readVarInt(dataInputStream);
-        if (packetID != id) {
-            socket.close();
-            getLogger().info("Connection from " + socket.getInetAddress().getHostAddress() + ":" + socket.getPort() +
-                    " closed: Not allowed packet has been sent!");
-            return true;
-        }
-        return false;
     }
 
     @SneakyThrows
