@@ -1,5 +1,7 @@
 package com.github.lory24.jubug.util.player;
 
+import com.github.lory24.jubug.packets.play.PlayOutPacket;
+
 import java.net.Socket;
 
 public class PlayerConnection {
@@ -9,7 +11,7 @@ public class PlayerConnection {
         this.socket = socket;
     }
 
-    public void sendPacket() {
-
+    public void sendPacket(final PlayOutPacket packet) {
+        packet.send(socket);
     }
 }

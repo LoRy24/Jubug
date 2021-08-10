@@ -23,5 +23,5 @@ public class StatusPingPacket extends Packet<StatusPingPacket> {
     }
 
     @Override
-    public void sendPacket(Socket socket, DataOutputStream dataOutputStream) { }
+    public void prepareData() { }
 }

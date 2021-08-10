@@ -1,13 +1,15 @@
 package com.github.lory24.jubug;
 
 import com.github.lory24.jubug.packets.handshaking.HandshakePacket;
+import com.github.lory24.jubug.packets.login.LoginDisconnectPacket;
 import com.github.lory24.jubug.packets.login.LoginStartPacket;
+import com.github.lory24.jubug.packets.login.LoginSuccessPacket;
 import com.github.lory24.jubug.packets.status.StatusPingPacket;
 import com.github.lory24.jubug.packets.status.StatusPongPacket;
 import com.github.lory24.jubug.packets.status.StatusResponsePacket;
 import com.github.lory24.jubug.util.PacketsCheckingUtils;
 import com.github.lory24.jubug.util.ServerProprieties;
-import com.github.lory24.jubug.util.player.CraftPlayer;
+import com.github.lory24.jubug.util.player.PlayerConnection;
 import lombok.Getter;
 import lombok.SneakyThrows;
 
@@ -15,15 +17,13 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 
 @SuppressWarnings({"FieldCanBeLocal", "MismatchedQueryAndUpdateOfCollection"})
 public abstract class CraftServer {
     private final Logger logger;
     private ServerSocket serverSocket;
-    @Getter private final List<CraftPlayer> players = new ArrayList<>();
+    @Getter private final HashMap<String, CraftPlayer> players;
     private final HashMap<CraftPlayer, Thread> playersThreads;
     @Getter private ServerProprieties serverProprieties;
     @Getter private final int PROTOCOL = 47;
@@ -31,6 +31,7 @@ public abstract class CraftServer {
     public CraftServer() {
         this.logger = new Logger(null, System.out);
         this.playersThreads = new HashMap<>();
+        this.players = new HashMap<>();
     }
 
     @SneakyThrows
@@ -69,7 +70,15 @@ public abstract class CraftServer {
                 manageStatusRequest(socket, dataInputStream, dataOutputStream, handshakePacket.getProtocolVersion());
             } catch (Exception ignored) { }
         } else if (handshakePacket.getNextState() == 0x2) { // Login
-            makePlayerJoin(socket, dataInputStream, dataOutputStream);
+            Thread thread = new Thread(() -> {
+                try {
+                    Thread.sleep(220);
+                    makePlayerJoin(socket, dataInputStream, dataOutputStream);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            });
+            thread.start();
         } else {
             socket.close();
             getLogger().info("Connection from " + socket.getInetAddress().getHostAddress() + ":" + socket.getPort() + " closed: Bad packet!");
@@ -84,7 +93,7 @@ public abstract class CraftServer {
 
         // Send the response packet
         StatusResponsePacket statusResponsePacket = new StatusResponsePacket(PROTOCOL, protocolVersion, getServerProprieties().getMaxPlayers(), players.size(), getServerProprieties().getMotd());
-        statusResponsePacket.sendPacket(socket, dataOutputStream);
+        statusResponsePacket.sendPacket(dataOutputStream);
 
         // READ THE PING
         if (PacketsCheckingUtils.checkPacketLengthError(socket, dataInputStream) || PacketsCheckingUtils.checkPacketError(socket, dataInputStream, 0x01)) return;
@@ -93,7 +102,7 @@ public abstract class CraftServer {
 
         // SEND THE PONG
         StatusPongPacket statusPongPacket = new StatusPongPacket(payload);
-        statusPongPacket.sendPacket(socket, dataOutputStream);
+        statusPongPacket.sendPacket(dataOutputStream);
 
         socket.close();
     }
@@ -105,10 +114,35 @@ public abstract class CraftServer {
         LoginStartPacket loginStartPacket = new LoginStartPacket();
         loginStartPacket.readPacket(socket, dataInputStream);
         if (loginStartPacket.getName() == null) {
-
+            LoginDisconnectPacket loginDisconnectPacket = new LoginDisconnectPacket();
+            loginDisconnectPacket.sendPacket(dataOutputStream);
+            getLogger().info("Client at " + socket.getInetAddress().getHostAddress() + ":" + socket.getPort() + " disconnected: \"" + loginDisconnectPacket.getReason().getText() + "\"");
+            socket.close();
+            return;
         }
 
-        socket.close();
+        LoginSuccessPacket loginSuccessPacket = new LoginSuccessPacket(loginStartPacket.getName());
+        loginSuccessPacket.sendPacket(dataOutputStream);
+        getLogger().info("UUID of player " + loginSuccessPacket.getNickname() + " is " + loginSuccessPacket.getUuid() + ". Logging in...");
+
+        CraftPlayer craftPlayer = new CraftPlayer(new PlayerConnection(socket), loginSuccessPacket.getNickname(),
+                loginSuccessPacket.getUuid());
+        players.put(loginSuccessPacket.getNickname(), craftPlayer);
+        Thread thread = new Thread(() -> {
+            try {
+                Thread.sleep(450);
+                players.get(loginSuccessPacket.getNickname()).startPlayerConnectionState(socket);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        });
+        thread.start();
+        playersThreads.put(craftPlayer, thread);
+    }
+
+    public void removePlayer(String player) {
+        this.playersThreads.remove(this.players.get(player));
+        this.players.remove(player);
     }
 
     public Logger getLogger() {

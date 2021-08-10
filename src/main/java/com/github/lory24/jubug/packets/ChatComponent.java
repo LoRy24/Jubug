@@ -1,20 +1,17 @@
 package com.github.lory24.jubug.packets;
 
+import lombok.Getter;
+
 public class ChatComponent {
-    private final String text;
-    private String extraJson;
+    @Getter private final String text;
 
     public ChatComponent(String text) {
         this.text = text;
     }
 
-    public void setExtraJson(String extraJson) {
-        this.extraJson = extraJson;
-    }
-
     @Override
     public String toString() {
-        String jsonChatComponent = "{%s%s}";
-        return String.format(jsonChatComponent, text, extraJson == null ? "" : "," + extraJson);
+        String jsonChatComponent = "{\"text\":\"%s\"}";
+        return String.format(jsonChatComponent, text);
     }
 }

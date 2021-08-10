@@ -1,14 +1,15 @@
 package com.github.lory24.jubug.packets.login;
 
+import com.github.lory24.jubug.ServerDataUtil;
 import com.github.lory24.jubug.packets.ChatComponent;
 import com.github.lory24.jubug.packets.Packet;
+import lombok.Getter;
 
 import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.net.Socket;
 
 public class LoginDisconnectPacket extends Packet<LoginDisconnectPacket> {
-    private final ChatComponent reason = new ChatComponent("Your nickname contains more that 16 characters");
+    @Getter private final ChatComponent reason = new ChatComponent("Your nickname contains more that §c16 §rcharacters. §c§lYou sus!!!");
 
     public LoginDisconnectPacket() {
         super(0x00);
@@ -20,7 +21,8 @@ public class LoginDisconnectPacket extends Packet<LoginDisconnectPacket> {
     }
 
     @Override
-    public void sendPacket(Socket socket, DataOutputStream dataOutputStream) {
-
+    public void prepareData() {
+        writeID();
+        ServerDataUtil.writeString(dataOutputStream, reason.toString());
     }
 }

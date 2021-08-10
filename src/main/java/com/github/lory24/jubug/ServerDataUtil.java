@@ -6,6 +6,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.nio.charset.StandardCharsets;
 
+@SuppressWarnings("unused")
 public class ServerDataUtil {
 
     @SneakyThrows

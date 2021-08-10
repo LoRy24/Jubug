@@ -5,7 +5,6 @@ import com.github.lory24.jubug.packets.Packet;
 import lombok.Getter;
 
 import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.net.Socket;
 
 @SuppressWarnings("SpellCheckingInspection")
@@ -32,9 +31,8 @@ public class StatusResponsePacket extends Packet<StatusResponsePacket> {
     public StatusResponsePacket readPacket(Socket socket, DataInputStream dataInputStream) { return this; }
 
     @Override
-    public void sendPacket(Socket socket, DataOutputStream dataOutputStream) {
-        ServerDataUtil.writeVarInt(dataOutputStream, 3 + jsonResponse.getBytes().length);
-        ServerDataUtil.writeVarInt(dataOutputStream, 0x00);
+    public void prepareData() {
+        writeID();
         ServerDataUtil.writeString(dataOutputStream, String.format(jsonResponse, PROTOCOL, maxPlayers, onlinePlayers, motd));
     }
 }

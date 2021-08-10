@@ -22,5 +22,5 @@ public class LoginStartPacket extends Packet<LoginStartPacket> {
     }
 
     @Override
-    public void sendPacket(Socket socket, DataOutputStream dataOutputStream) { }
+    public void prepareData() { }
 }

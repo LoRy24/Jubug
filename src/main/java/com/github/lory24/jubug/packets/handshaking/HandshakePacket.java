@@ -6,7 +6,6 @@ import lombok.Getter;
 import lombok.SneakyThrows;
 
 import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.net.Socket;
 
 public class HandshakePacket extends Packet<HandshakePacket> {
@@ -31,5 +30,5 @@ public class HandshakePacket extends Packet<HandshakePacket> {
     }
 
     @Override
-    public void sendPacket(Socket socket, DataOutputStream dataOutputStream) { }
+    public void prepareData() { }
 }

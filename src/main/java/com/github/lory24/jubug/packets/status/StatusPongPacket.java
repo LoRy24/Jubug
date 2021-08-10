@@ -1,14 +1,11 @@
 package com.github.lory24.jubug.packets.status;
 
-import com.github.lory24.jubug.ServerDataUtil;
 import com.github.lory24.jubug.packets.Packet;
 import lombok.Getter;
 import lombok.SneakyThrows;
 
 import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.net.Socket;
-import java.nio.charset.StandardCharsets;
 
 public class StatusPongPacket extends Packet<StatusPongPacket> {
     @Getter private final long payload;
@@ -23,9 +20,8 @@ public class StatusPongPacket extends Packet<StatusPongPacket> {
 
     @SneakyThrows
     @Override
-    public void sendPacket(Socket socket, DataOutputStream dataOutputStream) {
-        ServerDataUtil.writeVarInt(dataOutputStream, 1 + String.valueOf(getPayload()).getBytes(StandardCharsets.UTF_8).length);
-        ServerDataUtil.writeVarLong(dataOutputStream, 0x01);
+    public void prepareData() {
+        writeID();
         dataOutputStream.writeLong(getPayload());
     }
 }

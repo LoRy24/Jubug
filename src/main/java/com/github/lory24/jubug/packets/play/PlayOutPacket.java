@@ -1,19 +1,18 @@
-package com.github.lory24.jubug.packets;
+package com.github.lory24.jubug.packets.play;
 
 import com.github.lory24.jubug.ServerDataUtil;
 import lombok.SneakyThrows;
 
 import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.net.Socket;
 
-public abstract class Packet<T extends Packet> {
-    public final int packetID;
+public abstract class PlayOutPacket {
+    private final int packetID;
     protected final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
     protected final DataOutputStream dataOutputStream = new DataOutputStream(byteArrayOutputStream);
 
-    public Packet(int packetID) {
+    protected PlayOutPacket(int packetID) {
         this.packetID = packetID;
     }
 
@@ -22,13 +21,12 @@ public abstract class Packet<T extends Packet> {
     }
 
     @SneakyThrows
-    public void sendPacket(DataOutputStream dos) {
-        prepareData();
+    public void send(Socket socket) {
+        DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
+        setupData();
         ServerDataUtil.writeVarInt(dos, byteArrayOutputStream.size());
         dos.write(byteArrayOutputStream.toByteArray());
     }
 
-    public abstract T readPacket(Socket socket, DataInputStream dataInputStream);
-
-    public abstract void prepareData();
+    public abstract void setupData();
 }
