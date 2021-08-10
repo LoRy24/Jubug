@@ -1,5 +1,9 @@
 package com.github.lory24.jubug;
 
+import com.github.lory24.jubug.packets.handshaking.HandshakePacket;
+import com.github.lory24.jubug.packets.status.StatusPingPacket;
+import com.github.lory24.jubug.packets.status.StatusPongPacket;
+import com.github.lory24.jubug.packets.status.StatusResponsePacket;
 import com.github.lory24.jubug.util.PacketsCheckingUtils;
 import com.github.lory24.jubug.util.ServerProprieties;
 import com.github.lory24.jubug.util.player.CraftPlayer;
@@ -21,8 +25,8 @@ public abstract class CraftServer {
     private ServerSocket serverSocket;
     @Getter private final List<CraftPlayer> players = new ArrayList<>();
     private final HashMap<CraftPlayer, Thread> playersThreads;
-    private ServerProprieties serverProprieties;
-    private final int PROTOCOL = 47;
+    @Getter private ServerProprieties serverProprieties;
+    @Getter private final int PROTOCOL = 47;
 
     public CraftServer() {
         this.logger = new Logger(null, System.out);
@@ -59,18 +63,13 @@ public abstract class CraftServer {
                 new DataOutputStream(socket.getOutputStream()); // Server -> Client
 
         if (PacketsCheckingUtils.checkPacketLengthError(socket, dataInputStream) || PacketsCheckingUtils.checkPacketError(socket, dataInputStream, 0x00)) return;
-
-        int protocolVersion = ServerDataUtil.readVarInt(dataInputStream);
-        ServerDataUtil.readString(dataInputStream);
-        dataInputStream.readUnsignedShort();
-
-        int nextState = ServerDataUtil.readVarInt(dataInputStream);
-        if (nextState == 0x1) { // Status
+        HandshakePacket handshakePacket = new HandshakePacket().readPacket(socket, dataInputStream);
+        if (handshakePacket.getNextState() == 0x1) { // Status
             try {
-                manageStatusRequest(socket, dataInputStream, dataOutputStream, protocolVersion);
+                manageStatusRequest(socket, dataInputStream, dataOutputStream, handshakePacket.getProtocolVersion());
             } catch (Exception ignored) { }
-        } else if (nextState == 0x2) { // Login
-            makePlayerJoin(socket);
+        } else if (handshakePacket.getNextState() == 0x2) { // Login
+            makePlayerJoin(socket, dataInputStream, dataOutputStream);
         } else {
             socket.close();
             getLogger().info("Connection from " + socket.getInetAddress().getHostAddress() + ":" + socket.getPort() + " closed: Bad packet!");
@@ -79,30 +78,31 @@ public abstract class CraftServer {
 
     private void manageStatusRequest(Socket socket, DataInputStream dataInputStream, DataOutputStream dataOutputStream, int protocolVersion) throws Exception {
 
-        if (PacketsCheckingUtils.checkPacketLengthError(socket, dataInputStream) || PacketsCheckingUtils.checkPacketError(socket, dataInputStream, 0x00)) return;
+        // Read the first packet
+        if (PacketsCheckingUtils.checkPacketLengthError(socket, dataInputStream) || PacketsCheckingUtils.checkPacketError(
+                socket, dataInputStream, 0x00)) return;
 
-        // SEND A RESPONSE
-        String jsonResp = "{\"version\":{\"name\":\"Jubug 1.8\",\"protocol\":" + PROTOCOL + "},\"players\":{\"max\":" + serverProprieties.getMaxPlayers() + ",\"online\":" + players.size() + "}," +
-                "\"description\":{\"text\":\"%s\"}}";
-        jsonResp = protocolVersion == PROTOCOL ? String.format(jsonResp, serverProprieties.getMotd()) : String.format(jsonResp, "\u00a7cBRO CHANGE VERSION NOW!");
-        ServerDataUtil.writeVarInt(dataOutputStream, 3 + jsonResp.getBytes().length);
-        ServerDataUtil.writeVarInt(dataOutputStream, 0x00);
-        ServerDataUtil.writeString(dataOutputStream, jsonResp);
+        // Send the response packet
+        StatusResponsePacket statusResponsePacket = new StatusResponsePacket(PROTOCOL, protocolVersion, getServerProprieties().getMaxPlayers(), players.size(), getServerProprieties().getMotd());
+        statusResponsePacket.sendPacket(socket, dataOutputStream);
 
         // READ THE PING
         if (PacketsCheckingUtils.checkPacketLengthError(socket, dataInputStream) || PacketsCheckingUtils.checkPacketError(socket, dataInputStream, 0x01)) return;
-        long v = dataInputStream.readLong();
+        StatusPingPacket statusPingPacket = new StatusPingPacket().readPacket(socket, dataInputStream);
+        long payload = statusPingPacket.getPayload();
 
         // SEND THE PONG
-        ServerDataUtil.writeVarInt(dataOutputStream, String.valueOf(0x01).getBytes(StandardCharsets.UTF_8).length + String.valueOf(v)
-                .getBytes(StandardCharsets.UTF_8).length);
-        ServerDataUtil.writeVarLong(dataOutputStream, 0x01);
-        dataOutputStream.writeLong(v);
+        StatusPongPacket statusPongPacket = new StatusPongPacket(payload);
+        statusPongPacket.sendPacket(socket, dataOutputStream);
+
         socket.close();
     }
 
     @SneakyThrows
-    private void makePlayerJoin(Socket socket) {
+    private void makePlayerJoin(Socket socket, DataInputStream dataInputStream, DataOutputStream dataOutputStream) {
+
+        if (PacketsCheckingUtils.checkPacketLengthError(socket, dataInputStream) || PacketsCheckingUtils.checkPacketError(socket, dataInputStream, 0x00)) return;
+
         socket.close();
     }
 
