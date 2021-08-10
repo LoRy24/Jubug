@@ -82,4 +82,12 @@ public class ServerDataUtil {
         final byte[] bytes = dataInputStream.readNBytes(length);
         return new String(bytes, StandardCharsets.UTF_8);
     }
+
+    @SneakyThrows
+    public static String read16string(final DataInputStream dataInputStream) {
+        final int length = readVarInt(dataInputStream);
+        final byte[] bytes = dataInputStream.readNBytes(length);
+        String value = new String(bytes, StandardCharsets.UTF_8);
+        return value.toCharArray().length <= 16 ? value : null;
+    }
 }

@@ -1,6 +1,7 @@
 package com.github.lory24.jubug;
 
 import com.github.lory24.jubug.packets.handshaking.HandshakePacket;
+import com.github.lory24.jubug.packets.login.LoginStartPacket;
 import com.github.lory24.jubug.packets.status.StatusPingPacket;
 import com.github.lory24.jubug.packets.status.StatusPongPacket;
 import com.github.lory24.jubug.packets.status.StatusResponsePacket;
@@ -102,6 +103,11 @@ public abstract class CraftServer {
     private void makePlayerJoin(Socket socket, DataInputStream dataInputStream, DataOutputStream dataOutputStream) {
 
         if (PacketsCheckingUtils.checkPacketLengthError(socket, dataInputStream) || PacketsCheckingUtils.checkPacketError(socket, dataInputStream, 0x00)) return;
+        LoginStartPacket loginStartPacket = new LoginStartPacket();
+        loginStartPacket.readPacket(socket, dataInputStream);
+        if (loginStartPacket.getName() == null) {
+
+        }
 
         socket.close();
     }
