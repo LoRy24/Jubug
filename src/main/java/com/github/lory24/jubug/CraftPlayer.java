@@ -44,9 +44,7 @@ public class CraftPlayer {
             });
             checkConnectionThread.start();
 
-            while (Jubug.getServer().getPlayers().containsKey(nickname)) {
-                Jubug.getServer().getLogger().info("lol");
-            }
+            while (Jubug.getServer().getPlayers().containsKey(nickname));
             if (!socket.isClosed()) socket.close();
 
         } catch (IOException ignored) { }
