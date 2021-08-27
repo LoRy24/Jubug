@@ -14,6 +14,6 @@ public class PacketPlayOutPlayerDisconnect extends PlayOutPacket {
     @Override
     public void setupData() {
         writeID();
-        ServerDataUtil.writeString(dataOutputStream, reason.getText());
+        ServerDataUtil.writeString(dataOutputStream, reason.toString());
     }
 }
