@@ -34,7 +34,9 @@ public class CraftPlayer {
                 while (true) {
                     try {
                         if (socket.getInputStream().read() == -1) {
-                            this.setConnected(false);
+                            Jubug.getServer().getLogger().info("Player " + this.nickname + " disconnected!");
+                            Jubug.getServer().removePlayer(this.nickname);
+                            this.playerConnection.disconnect();
                             break;
                         }
                     } catch (IOException e) { e.printStackTrace(); }
@@ -42,14 +44,10 @@ public class CraftPlayer {
             });
             checkConnectionThread.start();
 
-            while (true) {
-                if (!connected) {
-                    Jubug.getServer().getLogger().info("Player " + this.nickname + " disconnected!");
-                    Jubug.getServer().removePlayer(this.nickname);
-                    this.playerConnection.disconnect();
-                    break;
-                }
+            while (Jubug.getServer().getPlayers().containsKey(nickname)) {
+                Jubug.getServer().getLogger().info("lol");
             }
+            if (!socket.isClosed()) socket.close();
 
         } catch (IOException ignored) { }
     }
