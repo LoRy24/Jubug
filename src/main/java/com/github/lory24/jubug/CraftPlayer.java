@@ -52,8 +52,8 @@ public class CraftPlayer {
 
     public void kickPlayer(String reason) {
         this.playerConnection.sendPacket(new PacketPlayOutPlayerDisconnect(new ChatComponent(reason)));
-        Jubug.getServer().removePlayer(this.nickname);
         this.playerConnection.disconnect();
+        Jubug.getServer().removePlayer(this.nickname);
         // TODO kick callback
     }
 
