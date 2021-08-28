@@ -56,8 +56,4 @@ public class CraftPlayer {
         Jubug.getServer().removePlayer(this.nickname);
         // TODO kick callback
     }
-
-    public void setConnected(boolean connected) {
-        this.connected = connected;
-    }
 }
