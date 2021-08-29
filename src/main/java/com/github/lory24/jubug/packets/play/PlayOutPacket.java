@@ -24,7 +24,7 @@ public abstract class PlayOutPacket {
     public void send(Socket socket) {
         DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
         setupData();
-        ServerDataUtil.writeVarInt(dos, byteArrayOutputStream.size());
+        ServerDataUtil.writeVarInt(dos, byteArrayOutputStream.size() * 2);
         dos.write(byteArrayOutputStream.toByteArray());
     }
 

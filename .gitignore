@@ -1,4 +1,4 @@
 # Project exclude paths
 /target/
 /.idea/
-Jubug.iml
+/DebugFolder/
