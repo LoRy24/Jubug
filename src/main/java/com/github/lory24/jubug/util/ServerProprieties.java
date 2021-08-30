@@ -1,13 +1,16 @@
 package com.github.lory24.jubug.util;
 
+import com.github.lory24.jubug.game_utils.PlayerGameMode;
+import lombok.Getter;
 import lombok.SneakyThrows;
 
 import java.io.*;
 
 public class ServerProprieties {
-    private final int port;
-    private final String motd;
-    private final int maxPlayers;
+    @Getter private final int port;
+    @Getter private final String motd;
+    @Getter private final int maxPlayers;
+    @Getter private final PlayerGameMode defaultGamemode;
 
     @SneakyThrows
     public ServerProprieties() {
@@ -22,17 +25,6 @@ public class ServerProprieties {
         this.port = Integer.parseInt(proprietiesSheet.getValues().get("port"));
         this.motd = proprietiesSheet.getValues().get("motd");
         this.maxPlayers = Integer.parseInt(proprietiesSheet.getValues().get("max-players"));
-    }
-
-    public int getPort() {
-        return port;
-    }
-
-    public String getMotd() {
-        return motd;
-    }
-
-    public int getMaxPlayers() {
-        return maxPlayers;
+        this.defaultGamemode = PlayerGameMode.valueOf(proprietiesSheet.getValues().get("default-gamemode"));
     }
 }
