@@ -1,4 +1,18 @@
 # If you're bad please don't edit this file ok?
+#
+# The port of the server
+#
 port=25565
+#
+# The motd of the server
+#
 motd=A \u00a7cJubug \u00a7rMinecraft Server
+#
+# The max players for the server
+#
 max-players=50
+#
+# The default gamemode
+# SURVIVAL, CREATIVE, SPECTATOR, ADVENTURE
+#
+default-gamemode=SURVIVAL
