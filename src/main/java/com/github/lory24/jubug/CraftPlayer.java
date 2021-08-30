@@ -15,12 +15,18 @@ public class CraftPlayer {
     public final PlayerConnection playerConnection;
     @Getter private final String nickname;
     @Getter private final UUID uuid;
-    private boolean connected = true;
+    @Getter private int eid;
 
     public CraftPlayer(PlayerConnection playerConnection, String nickname, UUID uuid) {
         this.playerConnection = playerConnection;
         this.nickname = nickname;
         this.uuid = uuid;
+        for (int i = 0; i <= Jubug.getServer().registeredEID.size(); i++) {
+            if (Jubug.getServer().registeredEID.contains(i)) continue;
+            this.eid = i;
+            Jubug.getServer().registeredEID.add(i);
+            break;
+        }
     }
 
     protected void startPlayerConnectionState(Socket socket) {

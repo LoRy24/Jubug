@@ -17,7 +17,9 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 @SuppressWarnings({"FieldCanBeLocal", "MismatchedQueryAndUpdateOfCollection"})
 public abstract class CraftServer {
@@ -27,11 +29,15 @@ public abstract class CraftServer {
     private final HashMap<CraftPlayer, Thread> playersThreads;
     @Getter private ServerProprieties serverProprieties;
     @Getter private final int PROTOCOL = 47;
+    protected final List<Integer> registeredEID;
+    @Getter private final List<CraftWorld> loadedWorlds;
 
     public CraftServer() {
         this.logger = new Logger(null, System.out);
         this.playersThreads = new HashMap<>();
         this.players = new HashMap<>();
+        this.registeredEID = new ArrayList<>();
+        loadedWorlds = new ArrayList<>();
     }
 
     @SneakyThrows
