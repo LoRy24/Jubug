@@ -5,7 +5,6 @@ import com.github.lory24.jubug.packets.Packet;
 import lombok.Getter;
 
 import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.net.Socket;
 
 public class LoginStartPacket extends Packet<LoginStartPacket> {
@@ -17,7 +16,7 @@ public class LoginStartPacket extends Packet<LoginStartPacket> {
 
     @Override
     public LoginStartPacket readPacket(Socket socket, DataInputStream dataInputStream) {
-        this.name = ServerDataUtil.read16string(dataInputStream);
+        this.name = ServerDataUtil.readString(dataInputStream);
         return this;
     }
 

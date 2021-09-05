@@ -9,84 +9,54 @@ import java.nio.charset.StandardCharsets;
 @SuppressWarnings("unused")
 public class ServerDataUtil {
 
+    // VAR-INT
+
     @SneakyThrows
-    public static int readVarInt(DataInputStream dataInputStream) {
-        int value = 0;
-        int bitOffset = 0;
-        byte currentByte;
+    public static int readVarInt(final DataInputStream dataInputStream) {
+        int var1 = 0;
+        int var2 = 0;
+        byte var3;
+
         do {
-            if (bitOffset == 35) throw new RuntimeException("VarInt is too big");
+            var3 = dataInputStream.readByte();
+            var1 |= (var3 & 127) << var2++ * 7;
 
-            currentByte = dataInputStream.readByte();
-            value |= (currentByte & 0b01111111) << bitOffset;
+            if (var2 > 5) {
+                throw new RuntimeException("VarInt too big");
+            }
+        }
+        while ((var3 & 128) == 128);
 
-            bitOffset += 7;
-        } while ((currentByte & 0b10000000) != 0);
-
-        return value;
+        return var1;
     }
 
     @SneakyThrows
-    public static long readVarLong(DataInputStream dataInputStream) {
-        long value = 0;
-        int bitOffset = 0;
-        byte currentByte;
-        do {
-            if (bitOffset == 70) throw new RuntimeException("VarLong is too big");
+    public static void writeVarInt(final DataOutputStream dataOutputStream, int p_150787_1_) {
+        while ((p_150787_1_ & -128) != 0) {
+            dataOutputStream.writeByte(p_150787_1_ & 127 | 128);
+            p_150787_1_ >>>= 7;
+        }
 
-            currentByte = dataInputStream.readByte();
-            value |= (long) (currentByte & 0b01111111) << bitOffset;
-
-            bitOffset += 7;
-        } while ((currentByte & 0b10000000) != 0);
-
-        return value;
+        dataOutputStream.writeByte(p_150787_1_);
     }
 
-    @SneakyThrows
-    public static void writeVarInt(DataOutputStream dataOutputStream, int value) {
-        do {
-            byte currentByte = (byte) (value & 0b01111111);
-
-            value >>>= 7;
-            if (value != 0) currentByte |= 0b10000000;
-
-            dataOutputStream.writeByte(currentByte);
-        } while (value != 0);
-    }
-
-    @SneakyThrows
-    public static void writeVarLong(DataOutputStream dataOutputStream, long value) {
-        do {
-            byte currentByte = (byte) (value & 0b01111111);
-
-            value >>>= 7;
-            if (value != 0) currentByte |= 0b10000000;
-
-            dataOutputStream.writeByte(currentByte);
-        } while (value != 0);
-    }
-
-    @SneakyThrows
-    public static void writeString(final DataOutputStream dataOutputStream, final String s) {
-        final byte[] bytes = s.getBytes(StandardCharsets.UTF_8);
-        if (bytes.length> 32767) System.out.println("The string is too long!");
-        writeVarInt(dataOutputStream, bytes.length);
-        dataOutputStream.write(bytes, 0, bytes.length);
-    }
+    // STRING
 
     @SneakyThrows
     public static String readString(final DataInputStream dataInputStream) {
-        final int length = readVarInt(dataInputStream);
-        final byte[] bytes = dataInputStream.readNBytes(length);
-        return new String(bytes, StandardCharsets.UTF_8);
+        int var2 = readVarInt(dataInputStream);
+        return new String(dataInputStream.readNBytes(var2),
+                StandardCharsets.UTF_8);
     }
 
     @SneakyThrows
-    public static String read16string(final DataInputStream dataInputStream) {
-        final int length = readVarInt(dataInputStream);
-        final byte[] bytes = dataInputStream.readNBytes(length);
-        String value = new String(bytes, StandardCharsets.UTF_8);
-        return value.toCharArray().length <= 16 ? value : null;
+    public static void writeString(final DataOutputStream dataOutputStream, String p_150785_1_) {
+        byte[] var2 = p_150785_1_.getBytes(StandardCharsets.UTF_8);
+        if (var2.length > 32767) {
+            System.out.println("The value is too long!");
+            return;
+        }
+        writeVarInt(dataOutputStream, var2.length);
+        dataOutputStream.write(var2, 0, var2.length);
     }
 }

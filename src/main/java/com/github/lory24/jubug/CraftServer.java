@@ -119,7 +119,7 @@ public abstract class CraftServer {
         if (PacketsCheckingUtils.checkPacketLengthError(socket, dataInputStream) || PacketsCheckingUtils.checkPacketError(socket, dataInputStream, 0x00)) return;
         LoginStartPacket loginStartPacket = new LoginStartPacket();
         loginStartPacket.readPacket(socket, dataInputStream);
-        if (loginStartPacket.getName() == null) {
+        if (loginStartPacket.getName().toCharArray().length > 16) {
             LoginDisconnectPacket loginDisconnectPacket = new LoginDisconnectPacket();
             loginDisconnectPacket.sendPacket(dataOutputStream);
             getLogger().info("Client at " + socket.getInetAddress().getHostAddress() + ":" + socket.getPort() + " disconnected: \"" + loginDisconnectPacket.getReason().getText() + "\"");
