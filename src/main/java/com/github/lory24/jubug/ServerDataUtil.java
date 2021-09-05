@@ -70,11 +70,9 @@ public class ServerDataUtil {
     @SneakyThrows
     public static void writeString(final DataOutputStream dataOutputStream, final String s) {
         final byte[] bytes = s.getBytes(StandardCharsets.UTF_8);
-        final int byteLength = bytes.length;
-        if (byteLength <= Short.MAX_VALUE) {
-            writeVarInt(dataOutputStream, byteLength);
-            dataOutputStream.write(bytes, 0, bytes.length);
-        }
+        if (bytes.length> 32767) System.out.println("The string is too long!");
+        writeVarInt(dataOutputStream, bytes.length);
+        dataOutputStream.write(bytes, 0, bytes.length);
     }
 
     @SneakyThrows
